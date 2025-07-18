@@ -10,6 +10,7 @@ from docx import Document
 from typing import Optional, List
 from pydub import AudioSegment
 import tempfile
+from moviepy.editor import AudioFileClip
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -37,14 +38,21 @@ def extract_audio(video_path: str) -> str:
         video.audio.write_audiofile(temp_audio_path)
     return temp_audio_path
 
-def split_audio(audio_path: str, chunk_length_ms: int = 9 * 60 * 1000) -> List[str]:
-    audio = AudioSegment.from_file(audio_path)
+def split_audio(audio_path: str, chunk_length_sec: int = 540) -> List[str]:
+    audio = AudioFileClip(audio_path)
+    duration = int(audio.duration)
     chunk_paths = []
-    for i in range(0, len(audio), chunk_length_ms):
-        chunk = audio[i:i + chunk_length_ms]
-        chunk_path = tempfile.mktemp(suffix=f"_chunk_{i//chunk_length_ms}.mp3")
-        chunk.export(chunk_path, format="mp3")
+
+    for i in range(0, duration, chunk_length_sec):
+        start = i
+        end = min(i + chunk_length_sec, duration)
+        chunk = audio.subclip(start, end)
+
+        chunk_path = tempfile.mktemp(suffix=f"_chunk_{i//chunk_length_sec}.mp3")
+        chunk.write_audiofile(chunk_path)
         chunk_paths.append(chunk_path)
+
+    audio.close()
     return chunk_paths
 
 def transcribe_audio(audio_path: str) -> str:

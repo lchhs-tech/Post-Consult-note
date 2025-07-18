@@ -8,7 +8,6 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.schema.messages import HumanMessage
 from docx import Document
 from typing import Optional, List
-from pydub import AudioSegment
 import tempfile
 from moviepy.editor import AudioFileClip
 

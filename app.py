@@ -106,10 +106,10 @@ def main_app():
         if st.button("🚪 Logout"):
             logout()
 
-    st.markdown("Upload a **preconsult note (.docx)** and one or more **audio/video** consultation files to generate a combined summary.")
+    st.markdown("Upload a **preconsult note (.docx)** and **video** consultation files to generate a combined summary.")
 
     uploaded_word_file = st.file_uploader("Upload Preconsult Note (.docx) [Optional]", type=["docx"])
-    uploaded_files = st.file_uploader("Upload Audio/Video Consultation Files", type=["mp3", "wav", "m4a", "ogg", "mp4"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Upload Audio/Video Consultation Files", type=["mp4"], accept_multiple_files=True)
 
     if uploaded_files:
         if st.button("Generate Combined Summary (.docx)"):

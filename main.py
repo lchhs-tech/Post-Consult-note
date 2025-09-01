@@ -1,6 +1,7 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
+from moviepy.editor import VideoFileClip
 from pydantic import BaseModel, Field
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
@@ -8,8 +9,7 @@ from langchain.schema.messages import HumanMessage
 from docx import Document
 from typing import Optional, List
 import tempfile
-from moviepy.editor import VideoFileClip, AudioFileClip
-from moviepy.video.io.ffmpeg_reader import FFMPEG_VideoReader
+from moviepy.editor import AudioFileClip
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -31,25 +31,10 @@ class HealthHistory(BaseModel):
 parser = PydanticOutputParser(pydantic_object=HealthHistory)
 format_instructions = parser.get_format_instructions()
 
-# def extract_audio(video_path: str) -> str:
-#     temp_audio_path = tempfile.mktemp(suffix=".mp3")
-#     with VideoFileClip(video_path) as video:
-#         video.audio.write_audiofile(temp_audio_path)
-#     return temp_audio_path
-
-def extract_audio(file_path: str) -> str:
+def extract_audio(video_path: str) -> str:
     temp_audio_path = tempfile.mktemp(suffix=".mp3")
-    try:
-        # Try to open as video
-        with VideoFileClip(file_path) as video:
-            if video.audio is None:
-                raise ValueError("No audio track found in the video file.")
-            video.audio.write_audiofile(temp_audio_path)
-    except Exception as e:
-        print(f"Failed to load as video (possibly audio-only .mp4): {e}")
-        # Try treating it as audio-only file
-        with AudioFileClip(file_path) as audio:
-            audio.write_audiofile(temp_audio_path)
+    with VideoFileClip(video_path) as video:
+        video.audio.write_audiofile(temp_audio_path)
     return temp_audio_path
 
 def split_audio(audio_path: str, chunk_length_sec: int = 540) -> List[str]:
@@ -128,25 +113,13 @@ def extract_text_from_word_filelike(file) -> str:
                 texts.append(" | ".join(row_data))
     return "\n".join(texts)
 
-# def summarize_consultation(video_path: str, pre_extracted: str) -> dict:
-#     audio_path = None
-#     try:
-#         audio_path = extract_audio(video_path)
-#         transcript = transcribe_audio(audio_path)
-#         summary = generate_summary(transcript, pre_extracted)
-#         return summary.dict()
-#     finally:
-#         if audio_path and os.path.exists(audio_path):
-#             os.remove(audio_path)
-
-
 def summarize_consultation(file_path: str, pre_extracted: str) -> dict:
     audio_path = None
     try:
         file_ext = os.path.splitext(file_path)[1].lower()
         video_extensions = {'.mp4', '.mov', '.avi', '.mkv'}
-        audio_extensions = {'.mp3', '.wav', '.m4a', '.aac','.ogg'}
-        print(file_path,"##############")
+        audio_extensions = {'.mp3', '.wav', '.m4a', '.aac', '.ogg'}
+        print(file_path)
         if file_ext in video_extensions:
             audio_path = extract_audio(file_path)
             transcript = transcribe_audio(audio_path)

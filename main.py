@@ -31,10 +31,24 @@ class HealthHistory(BaseModel):
 parser = PydanticOutputParser(pydantic_object=HealthHistory)
 format_instructions = parser.get_format_instructions()
 
-def extract_audio(video_path: str) -> str:
+def extract_audio(file_path: str) -> str:
+    """
+    Extract audio from video file. Handles both video + audio MP4 and audio-only MP4.
+    Returns path to temp .mp3 file.
+    """
     temp_audio_path = tempfile.mktemp(suffix=".mp3")
-    with VideoFileClip(video_path) as video:
-        video.audio.write_audiofile(temp_audio_path)
+
+    try:
+        # Try as video first
+        with VideoFileClip(file_path) as video:
+            if video.audio is None:
+                raise ValueError("No audio stream found in video file")
+            video.audio.write_audiofile(temp_audio_path)
+    except Exception:
+        # If failed (likely audio-only MP4), fallback to AudioFileClip
+        with AudioFileClip(file_path) as audio:
+            audio.write_audiofile(temp_audio_path)
+
     return temp_audio_path
 
 def split_audio(audio_path: str, chunk_length_sec: int = 540) -> List[str]:
@@ -118,8 +132,8 @@ def summarize_consultation(file_path: str, pre_extracted: str) -> dict:
     try:
         file_ext = os.path.splitext(file_path)[1].lower()
         video_extensions = {'.mp4', '.mov', '.avi', '.mkv'}
-        audio_extensions = {'.mp3', '.wav', '.m4a', '.aac', '.ogg'}
-        print(file_path)
+        audio_extensions = {'.mp3', '.wav', '.m4a', '.aac', '.ogg','.mp4'}
+        
         if file_ext in video_extensions:
             audio_path = extract_audio(file_path)
             transcript = transcribe_audio(audio_path)
@@ -134,3 +148,4 @@ def summarize_consultation(file_path: str, pre_extracted: str) -> dict:
     finally:
         if audio_path and os.path.exists(audio_path):
             os.remove(audio_path)
+

@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import time
 
 # Load environment variables from .env
 load_dotenv()
@@ -21,7 +22,7 @@ def send_email_with_attachment(to_email, message):
     msg = MIMEMultipart("alternative")
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
-    msg["Subject"] = "Post Consult Summary"
+    msg["Subject"] = f"Post Consult Summary - {int(time.time())}"
 
     health_history_items = message.get("health_history", [])
     if isinstance(health_history_items, list):

@@ -143,6 +143,7 @@ def summarize_consultation(file_path: str, pre_extracted: str) -> dict:
             raise ValueError(f"Unsupported file type: {file_ext}")
 
         summary = generate_summary(transcript, pre_extracted)
+        print(summary.dict())  # Debugging line
         return summary.dict()
 
     finally:

@@ -75,7 +75,7 @@ def transcribe_audio(audio_path: str) -> str:
         with open(chunk_path, "rb") as audio_file:
             print(f"Transcribing chunk {i+1}/{len(chunks)}...")
             response = client.audio.transcriptions.create(
-                model="whisper-1",
+                model="gpt-4o-mini-transcribe",
                 file=audio_file,
                 response_format="text"
             )
